@@ -1,5 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Polyfill para Node.js 20 donde WebSocket nativo no está activo por defecto
+if (typeof window === 'undefined' && !globalThis.WebSocket) {
+  // @ts-expect-error polyfill para entornos node sin global WebSocket
+  globalThis.WebSocket = class DummyWebSocket {};
+}
+
 // Cliente con la clave secreta: salta RLS. Solo se importa desde rutas /api y
 // páginas del servidor, nunca desde un archivo con 'use client'.
 export function getSupabaseAdmin() {

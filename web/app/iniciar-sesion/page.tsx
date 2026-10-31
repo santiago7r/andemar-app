@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { buttonStyle, inputStyle, labelStyle } from '@/components/ui';
+import { buttonStyle, cardStyle, inputStyle, labelStyle } from '@/components/ui';
 
 export default function IniciarSesionPage() {
   const router = useRouter();
@@ -17,6 +17,7 @@ export default function IniciarSesionPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -24,46 +25,108 @@ export default function IniciarSesionPage() {
 
     if (error || !data.user) {
       setLoading(false);
-      setError(error?.message ?? 'No se pudo iniciar sesión.');
+      setError(
+        error?.message?.includes('Invalid login credentials')
+          ? 'Correo o contraseña incorrectos.'
+          : error?.message ?? 'No se pudo iniciar sesión.'
+      );
       return;
     }
 
+    // Consultar el perfil del usuario para redirigir según su rol
     const { data: profile } = await supabase
       .from('profiles')
       .select('role, is_admin')
       .eq('id', data.user.id)
       .maybeSingle();
 
-    router.replace(
-      profile?.is_admin ? '/admin' : profile?.role === 'seller' ? '/panel-vendedor' : '/'
-    );
+    if (profile?.is_admin) {
+      router.replace('/admin');
+    } else if (profile?.role === 'seller') {
+      router.replace('/panel-vendedor');
+    } else {
+      router.replace('/mis-reservas');
+    }
   }
 
   return (
-    <main style={{ maxWidth: 420, margin: '0 auto', padding: '32px 24px' }}>
-      <h1 style={{ color: 'var(--brand-dark)', marginBottom: 4 }}>Inicia sesión</h1>
-      <p style={{ color: 'var(--muted)', marginTop: 0 }}>Bienvenido de vuelta a Andemar.</p>
+    <main style={{ maxWidth: 440, margin: '48px auto', padding: '0 24px' }}>
+      <header style={{ marginBottom: 24, textAlign: 'center' }}>
+        <h1 style={{ color: 'var(--brand-dark)', fontSize: 28, margin: '0 0 8px' }}>
+          Inicia sesión
+        </h1>
+        <p style={{ color: 'var(--muted)', fontSize: 14, margin: 0 }}>
+          Ingresa a tu cuenta de Viajero o Vendedor en Andemar
+        </p>
+      </header>
 
-      <form onSubmit={handleSubmit}>
-        <label style={labelStyle} htmlFor="email">Correo</label>
-        <input id="email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} autoComplete="email" />
+      <form onSubmit={handleSubmit} style={{ ...cardStyle, padding: 24, background: '#fff' }}>
+        <label style={labelStyle} htmlFor="email">
+          Correo Electrónico
+        </label>
+        <input
+          id="email"
+          required
+          type="email"
+          placeholder="tu@correo.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ ...inputStyle, marginBottom: 14 }}
+          autoComplete="email"
+        />
 
-        <label style={labelStyle} htmlFor="password">Contraseña</label>
-        <input id="password" required type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} autoComplete="current-password" />
+        <label style={labelStyle} htmlFor="password">
+          Contraseña
+        </label>
+        <input
+          id="password"
+          required
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ ...inputStyle, marginBottom: 20 }}
+          autoComplete="current-password"
+        />
 
-        {error && <p style={{ color: 'var(--accent)' }}>{error}</p>}
+        {error && (
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: 10,
+              background: '#fef2f2',
+              color: '#b91c1c',
+              fontSize: 13,
+              marginBottom: 16,
+              border: '1px solid #fecaca',
+            }}
+          >
+            {error}
+          </div>
+        )}
 
-        <button type="submit" disabled={loading} style={{ ...buttonStyle, width: '100%' }}>
-          {loading ? 'Entrando…' : 'Entrar'}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            ...buttonStyle,
+            width: '100%',
+            padding: '13px',
+            fontSize: 15,
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {loading ? 'Ingresando…' : 'Iniciar Sesión'}
         </button>
-      </form>
 
-      <p style={{ textAlign: 'center', fontSize: 14 }}>
-        ¿No tienes cuenta?{' '}
-        <Link href="/registro" style={{ color: 'var(--brand)', fontWeight: 600 }}>
-          Regístrate
-        </Link>
-      </p>
+        <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted)', marginTop: 18, marginBottom: 0 }}>
+          ¿Aún no tienes cuenta?{' '}
+          <Link href="/registro" style={{ color: 'var(--brand)', fontWeight: 600, textDecoration: 'none' }}>
+            Regístrate aquí
+          </Link>
+        </p>
+      </form>
     </main>
   );
 }

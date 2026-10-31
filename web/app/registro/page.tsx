@@ -7,16 +7,18 @@ import { supabase } from '@/lib/supabase';
 import type { UserRole } from '@/lib/types';
 import { buttonStyle, cardStyle, inputStyle, labelStyle } from '@/components/ui';
 
-const ROLES: { value: UserRole; title: string; description: string }[] = [
+const ROLES: { value: UserRole; title: string; badge: string; description: string }[] = [
   {
     value: 'traveler',
-    title: 'Soy viajero',
-    description: 'Quiero reservar tours y guardar mis viajes.',
+    title: 'Soy Viajero',
+    badge: '🎒 Explorador',
+    description: 'Quiero descubrir destinos, reservar tours y gestionar mis viajes.',
   },
   {
     value: 'seller',
-    title: 'Soy vendedor',
-    description: 'Quiero recomendar tours y ganar comisiones con mi código.',
+    title: 'Soy Vendedor',
+    badge: '💼 Embajador / Guía',
+    description: 'Quiero recomendar tours con mi link propio y ganar comisiones por venta.',
   },
 ];
 
@@ -28,96 +30,206 @@ export default function RegistroPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingConfirmation, setPendingConfirmation] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    // El trigger on_auth_user_created (supabase/fase2.sql) crea el perfil con estos datos
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        data: { full_name: fullName.trim(), role },
-        emailRedirectTo: `${window.location.origin}/iniciar-sesion`,
-      },
-    });
-    setLoading(false);
 
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    if (!data.session) {
-      setPendingConfirmation(true);
-      return;
-    }
-    router.replace(role === 'seller' ? '/panel-vendedor' : '/');
-  }
+    try {
+      // 1. Registro seguro a través del servidor para asegurar creación inmediata de perfil y auth
+      const res = await fetch('/api/auth/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          email: email.trim(),
+          password,
+          role,
+        }),
+      });
 
-  if (pendingConfirmation) {
-    return (
-      <main style={{ maxWidth: 480, margin: '0 auto', padding: '32px 24px' }}>
-        <h1 style={{ color: 'var(--brand-dark)' }}>Revisa tu correo</h1>
-        <p style={{ color: 'var(--muted)' }}>
-          Te enviamos un enlace de confirmación a {email.trim()}. Después de confirmarlo, inicia
-          sesión.
-        </p>
-      </main>
-    );
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data.error) {
+        setError(data.error ?? 'Hubo un error al crear la cuenta. Intenta nuevamente.');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Iniciar sesión automáticamente
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (signInError) {
+        // Si no inicia sesión automática, enviarlo a iniciar sesión
+        router.replace('/iniciar-sesion');
+        return;
+      }
+
+      // 3. Redirección inteligente según el rol elegido
+      if (role === 'seller') {
+        router.replace('/panel-vendedor');
+      } else {
+        router.replace('/mis-reservas');
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      setError('Error de conexión. Verifica tu internet y vuelve a intentar.');
+      setLoading(false);
+    }
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '32px 24px' }}>
-      <h1 style={{ color: 'var(--brand-dark)', marginBottom: 4 }}>Crea tu cuenta</h1>
-      <p style={{ color: 'var(--muted)', marginTop: 0 }}>¿Cómo vas a usar Andemar?</p>
+    <main style={{ maxWidth: 500, margin: '40px auto', padding: '0 24px' }}>
+      <header style={{ marginBottom: 28, textAlign: 'center' }}>
+        <h1 style={{ color: 'var(--brand-dark)', fontSize: 28, margin: '0 0 8px' }}>
+          Crea tu cuenta en Andemar
+        </h1>
+        <p style={{ color: 'var(--muted)', fontSize: 15, margin: 0 }}>
+          Elige cómo deseas utilizar la plataforma
+        </p>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
-        {ROLES.map((r) => (
-          <button
-            key={r.value}
-            type="button"
-            onClick={() => setRole(r.value)}
-            style={{
-              ...cardStyle,
-              textAlign: 'left',
-              cursor: 'pointer',
-              font: 'inherit',
-              borderWidth: 1.5,
-              borderColor: role === r.value ? 'var(--brand)' : 'var(--surface-200)',
-              background: role === r.value ? '#eef7f8' : '#fff',
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>{r.title}</div>
-            <div style={{ fontSize: 13, color: 'var(--muted)' }}>{r.description}</div>
-          </button>
-        ))}
+      {/* Selector de rol */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 }}>
+        {ROLES.map((r) => {
+          const isSelected = role === r.value;
+          return (
+            <button
+              key={r.value}
+              type="button"
+              onClick={() => setRole(r.value)}
+              style={{
+                ...cardStyle,
+                textAlign: 'left',
+                cursor: 'pointer',
+                border: isSelected ? '2px solid var(--brand)' : '1px solid var(--surface-200)',
+                background: isSelected ? 'rgba(14, 124, 144, 0.06)' : '#fff',
+                padding: '16px 14px',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand)', display: 'block', marginBottom: 6 }}>
+                  {r.badge}
+                </span>
+                <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--brand-dark)', marginBottom: 6 }}>
+                  {r.title}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.4 }}>
+                  {r.description}
+                </div>
+              </div>
+              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: '50%',
+                    border: isSelected ? '4px solid var(--brand)' : '2px solid #cbd5e1',
+                    display: 'inline-block',
+                  }}
+                />
+                <span style={{ fontSize: 12, fontWeight: 600, color: isSelected ? 'var(--brand)' : '#64748b' }}>
+                  {isSelected ? 'Seleccionado' : 'Elegir'}
+                </span>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <label style={labelStyle} htmlFor="full_name">Nombre completo</label>
-        <input id="full_name" required value={fullName} onChange={(e) => setFullName(e.target.value)} style={inputStyle} autoComplete="name" />
+      <form onSubmit={handleSubmit} style={{ ...cardStyle, padding: 24, background: '#fff' }}>
+        <label style={labelStyle} htmlFor="full_name">
+          Nombre y Apellido
+        </label>
+        <input
+          id="full_name"
+          required
+          placeholder="Ej. Carolina Gómez"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          style={{ ...inputStyle, marginBottom: 14 }}
+          autoComplete="name"
+        />
 
-        <label style={labelStyle} htmlFor="email">Correo</label>
-        <input id="email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} autoComplete="email" />
+        <label style={labelStyle} htmlFor="email">
+          Correo Electrónico
+        </label>
+        <input
+          id="email"
+          required
+          type="email"
+          placeholder="tu@correo.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ ...inputStyle, marginBottom: 14 }}
+          autoComplete="email"
+        />
 
-        <label style={labelStyle} htmlFor="password">Contraseña</label>
-        <input id="password" required type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} autoComplete="new-password" />
+        <label style={labelStyle} htmlFor="password">
+          Contraseña (mínimo 6 caracteres)
+        </label>
+        <input
+          id="password"
+          required
+          type="password"
+          minLength={6}
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ ...inputStyle, marginBottom: 20 }}
+          autoComplete="new-password"
+        />
 
-        {error && <p style={{ color: 'var(--accent)' }}>{error}</p>}
+        {error && (
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: 10,
+              background: '#fef2f2',
+              color: '#b91c1c',
+              fontSize: 13,
+              marginBottom: 16,
+              border: '1px solid #fecaca',
+            }}
+          >
+            {error}
+          </div>
+        )}
 
-        <button type="submit" disabled={loading} style={{ ...buttonStyle, width: '100%' }}>
-          {loading ? 'Creando cuenta…' : 'Crear cuenta'}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            ...buttonStyle,
+            width: '100%',
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            padding: '14px',
+            fontSize: 15,
+          }}
+        >
+          {loading
+            ? 'Creando perfil…'
+            : role === 'seller'
+            ? 'Registrarme como Vendedor'
+            : 'Registrarme como Viajero'}
         </button>
-      </form>
 
-      <p style={{ textAlign: 'center', fontSize: 14 }}>
-        ¿Ya tienes cuenta?{' '}
-        <Link href="/iniciar-sesion" style={{ color: 'var(--brand)', fontWeight: 600 }}>
-          Inicia sesión
-        </Link>
-      </p>
+        <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted)', marginTop: 16, marginBottom: 0 }}>
+          ¿Ya tienes cuenta?{' '}
+          <Link href="/iniciar-sesion" style={{ color: 'var(--brand)', fontWeight: 600, textDecoration: 'none' }}>
+            Inicia sesión aquí
+          </Link>
+        </p>
+      </form>
     </main>
   );
 }

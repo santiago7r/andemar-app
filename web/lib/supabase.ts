@@ -11,4 +11,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Polyfill para Node.js 20 donde WebSocket nativo no está activo por defecto en SSR
+if (typeof window === 'undefined' && !globalThis.WebSocket) {
+  // @ts-expect-error polyfill para entornos node sin global WebSocket
+  globalThis.WebSocket = class DummyWebSocket {};
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

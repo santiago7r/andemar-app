@@ -36,3 +36,18 @@ export interface SellerCommission {
   bookings_confirmed: number;
   commission_cop: number;
 }
+
+export interface Booking {
+  id: string;
+  tour_id: string;
+  traveler_id: string | null;
+  referrer_id: string | null;
+  customer_name: string;
+  customer_phone: string;
+  people_count: number;
+  amount_cop: number;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  created_at: string;
+  tour?: Tour;
+}
+
