@@ -5,6 +5,7 @@
 
 -- 1. Asegurar columnas necesarias en profiles y bookings
 alter table profiles add column if not exists is_admin boolean not null default false;
+alter table profiles add column if not exists is_active boolean not null default true;
 alter table bookings add column if not exists amount_cop integer not null default 0;
 
 -- 2. Trigger para crear automáticamente el perfil en profiles al registrarse
