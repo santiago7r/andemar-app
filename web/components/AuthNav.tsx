@@ -57,26 +57,56 @@ export default function AuthNav() {
         borderBottom: '1px solid var(--surface-200)',
       }}
     >
-      <Link
-        href="/"
-        style={{
-          fontSize: 20,
-          fontWeight: 800,
-          color: 'var(--brand-dark)',
-          textDecoration: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-        }}
-      >
-        <span>Andemar</span>
-      </Link>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 14, fontWeight: 600 }}>
-        <Link href="/" style={{ color: 'var(--muted)', textDecoration: 'none' }}>
-          Tours
+      {/* Lado izquierdo: Logo, Tours y Botón Registro */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <Link
+          href="/"
+          style={{
+            fontSize: 20,
+            fontWeight: 800,
+            color: 'var(--brand-dark)',
+            textDecoration: 'none',
+          }}
+        >
+          Andemar
         </Link>
 
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, fontWeight: 600 }}>
+          <Link
+            href="/"
+            style={{
+              color: 'var(--muted)',
+              textDecoration: 'none',
+              padding: '6px 8px',
+              borderRadius: 8,
+              transition: 'color 0.2s',
+            }}
+          >
+            Tours
+          </Link>
+
+          <Link
+            href="/registro"
+            style={{
+              background: 'var(--brand)',
+              color: '#fff',
+              padding: '6px 14px',
+              borderRadius: 10,
+              textDecoration: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              boxShadow: '0 2px 6px rgba(14, 124, 144, 0.2)',
+            }}
+          >
+            Registro
+          </Link>
+        </div>
+      </div>
+
+      {/* Lado derecho: Acceso a Cuenta / Iniciar sesión */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 14, fontWeight: 600 }}>
         {loading ? null : profile ? (
           <>
             {profile.is_admin && (
@@ -133,27 +163,19 @@ export default function AuthNav() {
             </button>
           </>
         ) : (
-          <>
-            <Link
-              href="/iniciar-sesion"
-              style={{ color: 'var(--muted)', textDecoration: 'none' }}
-            >
-              Iniciar sesión
-            </Link>
-            <Link
-              href="/registro"
-              style={{
-                background: 'var(--brand)',
-                color: '#fff',
-                padding: '7px 16px',
-                borderRadius: 10,
-                textDecoration: 'none',
-                fontSize: 13,
-              }}
-            >
-              Crear cuenta
-            </Link>
-          </>
+          <Link
+            href="/iniciar-sesion"
+            style={{
+              color: 'var(--brand-dark)',
+              textDecoration: 'none',
+              padding: '6px 12px',
+              borderRadius: 8,
+              border: '1px solid var(--surface-200)',
+              fontSize: 13,
+            }}
+          >
+            Iniciar sesión
+          </Link>
         )}
       </div>
     </nav>
