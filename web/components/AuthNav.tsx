@@ -57,7 +57,7 @@ export default function AuthNav() {
         borderBottom: '1px solid var(--surface-200)',
       }}
     >
-      {/* Lado izquierdo: Logo, Tours y Botón Registro */}
+      {/* Lado izquierdo: Logo y enlaces directos */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
         <Link
           href="/"
@@ -71,42 +71,58 @@ export default function AuthNav() {
           Andemar
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, fontWeight: 600 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600 }}>
           <Link
             href="/"
             style={{
               color: 'var(--muted)',
               textDecoration: 'none',
-              padding: '6px 8px',
+              padding: '6px 10px',
               borderRadius: 8,
-              transition: 'color 0.2s',
             }}
           >
             Tours
           </Link>
 
-          <Link
-            href="/registro"
-            style={{
-              background: 'var(--brand)',
-              color: '#fff',
-              padding: '6px 14px',
-              borderRadius: 10,
-              textDecoration: 'none',
-              fontSize: 13,
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              boxShadow: '0 2px 6px rgba(14, 124, 144, 0.2)',
-            }}
-          >
-            Registro
-          </Link>
+          {!profile && (
+            <>
+              <Link
+                href="/registro/viajero"
+                style={{
+                  color: 'var(--brand-dark)',
+                  textDecoration: 'none',
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  border: '1px solid var(--surface-200)',
+                  background: '#f8fafc',
+                }}
+              >
+                🎒 Registro Viajero
+              </Link>
+
+              <Link
+                href="/registro/vendedor"
+                style={{
+                  background: '#b45309',
+                  color: '#fff',
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  boxShadow: '0 2px 5px rgba(180, 83, 9, 0.2)',
+                }}
+              >
+                💼 Registro Vendedor
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
       {/* Lado derecho: Acceso a Cuenta / Iniciar sesión */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 14, fontWeight: 600 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 13, fontWeight: 600 }}>
         {loading ? null : profile ? (
           <>
             {profile.is_admin && (
@@ -119,11 +135,11 @@ export default function AuthNav() {
               <Link
                 href="/panel-vendedor"
                 style={{
-                  color: 'var(--brand)',
+                  color: '#b45309',
                   textDecoration: 'none',
-                  background: 'rgba(14, 124, 144, 0.08)',
+                  background: '#fef3c7',
                   padding: '6px 12px',
-                  borderRadius: 10,
+                  borderRadius: 8,
                 }}
               >
                 💼 Panel Vendedor
@@ -136,14 +152,14 @@ export default function AuthNav() {
                   textDecoration: 'none',
                   background: 'rgba(14, 124, 144, 0.08)',
                   padding: '6px 12px',
-                  borderRadius: 10,
+                  borderRadius: 8,
                 }}
               >
                 🎒 Mis Reservas
               </Link>
             )}
 
-            <span style={{ color: 'var(--brand-dark)', fontWeight: 500, fontSize: 13 }}>
+            <span style={{ color: 'var(--brand-dark)', fontWeight: 600 }}>
               {profile.full_name.split(' ')[0]}
             </span>
 
@@ -171,7 +187,6 @@ export default function AuthNav() {
               padding: '6px 12px',
               borderRadius: 8,
               border: '1px solid var(--surface-200)',
-              fontSize: 13,
             }}
           >
             Iniciar sesión
